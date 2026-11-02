@@ -4,7 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="4dp">
 
     <!-- The speeds left of the FAB, the exit right of it; equal halves keep the gap under the centred FAB. -->
     <LinearLayout
