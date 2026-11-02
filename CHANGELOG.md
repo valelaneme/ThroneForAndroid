@@ -1,3 +1,7 @@
+#### 2.0.5.1
+
+* 第一个编译版本，只生成 v8a 文件
+
 #### 2.0.5
 
 * Add per-group routing profiles **1**
