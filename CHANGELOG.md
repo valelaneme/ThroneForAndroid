@@ -1,3 +1,7 @@
+#### 2.0.5.3
+
+ * 紧凑模式显示内容互相覆盖app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
+
 #### 2.0.5.2
 
 **底栏修改**
