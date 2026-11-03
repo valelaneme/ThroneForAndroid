@@ -1,7 +1,19 @@
+#### 2.0.5.7
+
+* 更新紧凑模式ip与国家测试，显示国旗和延时。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
+* 调整后的右侧信息显示优先级从高到低如下：
+   *1 测试中（实时测试进行时，显示“测试中...”）
+   *2 排队中（任务等待队列中，半透明显示“排队中”）
+   *3 连接异常 / 特殊状态（仅连通可用显示“连接成功”，超时/失败显示“不可用”）
+   *4 测速结果（有下载/上传速率时优先显示，覆盖延迟和 IP）
+   *5 国旗与延迟（无测速数据时优先显示国旗 + 延迟毫秒数，覆盖出网 IP）
+   *6 出网外部 IP（无测速且无延迟/国旗时显示 🌐 IP）
+   *7 历史流量统计（无任何上述测试结果时回退显示流量；流量为 0 时空白不占位）
+  
 #### 2.0.5.6
 
-* 1. 删除底栏测试是显示的http https。app/src/main/java/io/nekohasekai/sagernet/widget/StatsBar.kt
-* 2. 更新紧凑模式ip与国家测试，显示国旗和延时。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
+* 删除底栏测试是显示的http https。app/src/main/java/io/nekohasekai/sagernet/widget/StatsBar.kt
+
 
 #### 2.0.5.3
 
