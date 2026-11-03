@@ -1,6 +1,6 @@
 #### 2.0.5.5
 
-* 1. 删除底栏测试是显示的http https。app/src/main/res/layout/layout_stats_bar_content.xml
+* 1. 删除底栏测试是显示的http https。app/src/main/java/io/nekohasekai/sagernet/widget/StatsBar.kt
 * 2. 更新紧凑模式ip与国家测试，显示国旗和延时。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
 
 #### 2.0.5.3
