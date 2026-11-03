@@ -5,7 +5,9 @@
 
 #### 2.0.5.3
 
-* 更新紧凑模式测试数据显示规则。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
+*  更新紧凑模式右侧数据显示规则。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
+ * 1. 如果没有测试结果，或者测试结果情况，则显示流量统计信息，如果流量统计信息为0，则显示空。
+ * 2. IP与国家、速度、延迟 等测试结果根据时间戳显示最新数据。
 
 #### 2.0.5.2
 
