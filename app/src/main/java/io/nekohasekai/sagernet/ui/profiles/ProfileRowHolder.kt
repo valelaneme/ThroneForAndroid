@@ -123,7 +123,7 @@ internal class RowContent(
         }
 
         /**
-         * 互斥单选展示：测速 > IP > 延迟与国旗
+         * 互斥单选展示：测速 > 延迟与国旗 > IP
          * 保证只显示一个结果，新测试触发后自动覆盖
          */
         private fun singleTestResult(
@@ -135,13 +135,7 @@ internal class RowContent(
             // 1. 优先展示上下行速率（如果存在测速结果）
             speeds(context, profile.dlSpeed, profile.ulSpeed, secondary)?.let { return it }
 
-            // 2. 其次展示出口 IP
-            val ip = profile.ipOut.orEmpty()
-            if (ip.isNotEmpty()) {
-                return Item("🌐$NBSP$ip", secondary, context.getString(R.string.profile_row_ip, ip))
-            }
-
-            // 3. 基础展示：延迟与国家代码
+            // 2. 其次展示基础：延迟与国家代码
             val latency = profile.latency
             val head = ArrayList<String>()
             val headSpoken = ArrayList<String>()
@@ -156,6 +150,12 @@ internal class RowContent(
             }
             if (head.isNotEmpty()) {
                 return Item(head.joinToString(NBSP), color, headSpoken.joinToString(", "))
+            }
+
+            // 3. 兜底展示出口 IP
+            val ip = profile.ipOut.orEmpty()
+            if (ip.isNotEmpty()) {
+                return Item("🌐$NBSP$ip", secondary, context.getString(R.string.profile_row_ip, ip))
             }
 
             return null
