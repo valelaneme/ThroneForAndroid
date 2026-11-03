@@ -1,13 +1,18 @@
+#### 2.0.5.5
+
+* 1. 删除底栏测试是显示的http https。app/src/main/res/layout/layout_stats_bar_content.xml
+* 2. 更新紧凑模式ip与国家测试，显示国旗和延时。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
+
 #### 2.0.5.3
 
- * 紧凑模式显示内容互相覆盖app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
+* 更新紧凑模式测试数据显示规则。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
 
 #### 2.0.5.2
 
 **底栏修改**
-	* 1. 底栏形成“左侧双行网速、右侧国旗加状态”的对称排布。
-  * 2. 调低底栏高度。 app/src/main/res/layout/layout_stats_bar_content.xml
-	* 3. 一旦底层核心服务状态切换为 `Connected`（已连接），系统会**立即自动调用 `testConnection()` 发起测速**，实现了连接后全自动测速动作。app/src/main/java/io/nekohasekai/sagernet/ui/MainActivity.kt
+* 1. 底栏形成“左侧双行网速、右侧国旗加状态”的对称排布。app/src/main/res/layout/layout_stats_bar_content.xml
+* 2. 调低底栏高度。 app/src/main/res/layout/layout_stats_bar_content.xml
+* 3. 一旦底层核心服务状态切换为 `Connected`（已连接），系统会**立即自动调用 `testConnection()` 发起测速**，实现了连接后全自动测速动作。app/src/main/java/io/nekohasekai/sagernet/ui/MainActivity.kt
 
 #### 2.0.5.1
 
