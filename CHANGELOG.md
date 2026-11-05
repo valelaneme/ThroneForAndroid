@@ -1,7 +1,11 @@
 #### 2.0.5.6
 
-* 1. 删除底栏测试是显示的http https。app/src/main/java/io/nekohasekai/sagernet/widget/StatsBar.kt
-* 2. 更新紧凑模式ip与国家测试，显示国旗和延时。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
+*  底栏左侧区域
+ * 1. 单击：快速跳转至配置列表主页面，并高亮定位当前自动选择器 / 活动配置。
+ * 2. 长按：一键清空所有节点的历史测试数据（重置 Ping 延迟、测速结果与报错状态）。
+*  底栏右侧区域
+ * 1. 单击：测试当前活动出站链路的连通性（保持原有逻辑）。
+ * 2. 长按：批量测试当前主页面订阅/分组中全部节点的 Ping 延迟，并同步刷新出站 IP 与归属地国旗信息。
 
 #### 2.0.5.3
 
