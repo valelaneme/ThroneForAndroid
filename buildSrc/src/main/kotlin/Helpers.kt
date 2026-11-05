@@ -6,6 +6,8 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.kotlin.dsl.getByName
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Base64
 import java.util.Properties
 
@@ -63,10 +65,10 @@ fun Project.setupCommon() {
             targetCompatibility = JavaVersion.VERSION_17
         }
         
-        // 现代 Kotlin 编译选项配置（替代已废弃的 kotlinOptions）
-        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile::class.java).configureEach {
+        // 使用现代 Kotlin 编译选项配置（替代已废弃的 kotlinOptions）
+        tasks.withType(KotlinJvmCompile::class.java).configureEach {
             compilerOptions {
-                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                jvmTarget.set(JvmTarget.JVM_17)
             }
         }
 
