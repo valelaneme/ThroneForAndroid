@@ -10,10 +10,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.RemoteException
 import android.view.FocusFinder
-import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.addCallback
@@ -21,10 +19,8 @@ import androidx.annotation.IdRes
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.updatePaddingRelative
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
+import androidx.core.view.WindowCompat
 import androidx.preference.PreferenceDataStore
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.navigation.NavigationView
@@ -40,32 +36,33 @@ import io.nekohasekai.sagernet.bg.BaseService
 import io.nekohasekai.sagernet.bg.SagerConnection
 import io.nekohasekai.sagernet.bg.test.TestSpec
 import io.nekohasekai.sagernet.database.DataStore
-import io.nekohasekai.sagernet.database.GroupRepo
-import io.nekohasekai.sagernet.database.ProfileManager
-import io.nekohasekai.sagernet.database.RouteManager
-import io.nekohasekai.sagernet.database.SettingsMapper
 import io.nekohasekai.sagernet.database.SettingsRegistry
-import io.nekohasekai.sagernet.database.backup.BackupEntry
+import io.nekohasekai.sagernet.database.ProfileManager
 import io.nekohasekai.sagernet.database.preference.OnPreferenceDataStoreChangeListener
+import io.nekohasekai.sagernet.database.backup.BackupEntry
 import io.nekohasekai.sagernet.databinding.LayoutMainBinding
-import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.alert
 import io.nekohasekai.sagernet.ktx.isPreview
 import io.nekohasekai.sagernet.ktx.launchCustomTab
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
-import io.nekohasekai.sagernet.ktx.readableMessage
-import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import io.nekohasekai.sagernet.database.SettingsMapper
 import io.nekohasekai.sagernet.outbound.`import`.ProfileImport
-import io.nekohasekai.sagernet.ui.profiles.ProfileTests
 import io.nekohasekai.sagernet.ui.route.RouteImports
 import io.nekohasekai.sagernet.ui.settings.DnsSettingsFragment
 import io.nekohasekai.sagernet.ui.settings.XrayGeoSettingsFragment
 import io.nekohasekai.sagernet.ui.test.TestSessionClient
+import io.nekohasekai.sagernet.ktx.readableMessage
+import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import io.nekohasekai.sagernet.ui.MessageStore
+import io.nekohasekai.sagernet.ktx.Logs
+import io.nekohasekai.sagernet.database.RouteManager
 import io.nekohasekai.sagernet.utils.AppShortcuts
 import io.nekohasekai.sagernet.utils.PlatformNotifications
 import io.nekohasekai.sagernet.utils.Theme
 import io.nekohasekai.sagernet.utils.WifiStateAccess
 import io.nekohasekai.sagernet.widget.bars
+import androidx.lifecycle.lifecycleScope
+import androidx.drawerlayout.widget.DrawerLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,30 +141,10 @@ class MainActivity : ThemedActivity(),
         }
 
         binding.fab.setOnClickListener { toggleService() }
-
-        // 底栏触控拆分：左点/右点，左长按/右长按手势监听
-        val statsGestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onSingleTapUp(e: MotionEvent): Boolean {
-                if (e.x < binding.stats.width / 2f) {
-                    onStatsLeftClick()
-                } else {
-                    onStatsRightClick()
-                }
-                return true
-            }
-
-            override fun onLongPress(e: MotionEvent) {
-                if (e.x < binding.stats.width / 2f) {
-                    onStatsLeftLongClick()
-                } else {
-                    onStatsRightLongClick()
-                }
-            }
-        })
-
-        binding.stats.setOnTouchListener { _, event ->
-            statsGestureDetector.onTouchEvent(event)
-            false
+        binding.stats.setOnClickListener { if (DataStore.serviceState.connected) binding.stats.testConnection() }
+        binding.stats.setOnLongClickListener {
+            showStatsMenu()
+            true
         }
 
         setContentView(binding.root)
@@ -206,60 +183,6 @@ class MainActivity : ThemedActivity(),
                 }
                 .show()
         }
-    }
-
-    /** 1. 左侧点击：预留空间（可按需加入其他功能） */
-    private fun onStatsLeftClick() {
-        // 当前留空
-    }
-
-    /** 2. 左侧长按：清空测试数据（参照 ProfileItemMenu 逻辑安全清理当前分组/全部节点结果） */
-    private fun onStatsLeftLongClick() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val groupId = ProfileManager.currentGroupId()
-            val profileIds = ProfileManager.memberIds(groupId)
-            if (profileIds.isNotEmpty()) {
-                ProfileManager.clearTestResults(profileIds)
-                GroupRepo.postReload(groupId)
-            }
-            withContext(Dispatchers.Main) {
-                refreshConfigurationProfileState()
-                snackbar("已清空节点测试数据").show()
-            }
-        }
-    }
-
-    /** 3. 右侧点击：保持现有点击不变（已连接时测试连通性） */
-    private fun onStatsRightClick() {
-        if (DataStore.serviceState.connected) {
-            binding.stats.testConnection()
-        }
-    }
-
-    /** 4. 右侧长按：测试当前主页面节点的延迟和 IP/国家国旗 */
-    private fun onStatsRightLongClick() {
-        if (!DataStore.serviceState.connected) {
-            snackbar("服务未连接").show()
-            return
-        }
-        
-        // 刷新底层连通性状态
-        binding.stats.testConnection()
-
-        // 触发当前所选配置或当前分组的 IP 测试与延迟测试
-        lifecycleScope.launch(Dispatchers.IO) {
-            val currentProfileId = DataStore.selectedProxy
-            val groupId = ProfileManager.currentGroupId()
-            if (currentProfileId > 0L) {
-                // 参照 ProfileItemMenu 的安全调用方式，对当前节点发起 IP/国旗测试和 URL 测试
-                val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_holder)
-                if (currentFragment is ConfigurationFragment) {
-                    ProfileTests.startProfiles(currentFragment, TestSpec.KIND_IP, listOf(currentProfileId), groupId)
-                    ProfileTests.startProfiles(currentFragment, TestSpec.KIND_URL, listOf(currentProfileId), groupId)
-                }
-            }
-        }
-        snackbar("正在检测当前节点延迟与 IP 国旗...").show()
     }
 
     override fun onResume() {
@@ -603,6 +526,8 @@ class MainActivity : ThemedActivity(),
         }
     }
 
+    // Visibility, not isShown: the saved start error is shown from the first onResume, before the window is attached.
+    // The layout listener places the bar once the FAB has been laid out.
     private fun Snackbar.anchorAboveFab() {
         anchorView = binding.fab
         isAnchorViewLayoutListenerEnabled = true
@@ -610,3 +535,194 @@ class MainActivity : ThemedActivity(),
 
     override fun stateChanged(state: BaseService.State, profileName: String?, msg: String?) {
         changeState(state, msg, true)
+    }
+
+    val connection = SagerConnection(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND, true)
+    override fun onServiceConnected(service: ISagerNetService) = changeState(
+        try {
+            BaseService.State.values()[service.state]
+        } catch (_: RemoteException) {
+            BaseService.State.Idle
+        }
+    )
+
+    override fun onServiceDisconnected() = changeState(BaseService.State.Idle)
+    override fun onBinderDied() {
+        connection.disconnect(this)
+        connection.connect(this, this)
+    }
+
+    private val connect = registerForActivityResult(VpnRequestActivity.StartService()) {
+        if (it) snackbar(R.string.vpn_permission_denied).show()
+    }
+
+    private val firstStart = FirstStartPrompts(this)
+    private val wifiFlow = WifiPermissionFlow(this)
+
+    private fun toggleService() {
+        if (DataStore.serviceState.canStop) SagerNet.stopService() else startFromUi()
+    }
+
+    /** Wi-Fi rules of the routing profile the selected profile starts with ask for location access once before a start from here. */
+    private fun startFromUi() {
+        if (DataStore.wifiPermissionAsked || WifiStateAccess.status(this) == WifiStateAccess.Status.OK) {
+            return launchConnect()
+        }
+        lifecycleScope.launch {
+            val usesWifi = withContext(Dispatchers.IO) {
+                runCatching {
+                    val groupId = ProfileManager.getProfile(DataStore.selectedProxy)?.groupId ?: -1L
+                    RouteManager.routeFor(groupId).rules.any { rule ->
+                        !rule.disabled && (rule.wifi_ssid.any { it.isNotBlank() } || rule.wifi_bssid.any { it.isNotBlank() })
+                    }
+                }.getOrDefault(false)
+            }
+            if (usesWifi) {
+                DataStore.wifiPermissionAsked = true
+                wifiFlow.run { launchConnect() }
+            } else {
+                launchConnect()
+            }
+        }
+    }
+
+    private fun launchConnect() {
+        try {
+            connect.launch(null)
+        } catch (_: ActivityNotFoundException) {
+            VpnRequestActivity.showConsentUnavailable(this)
+        } catch (_: SecurityException) {
+            VpnRequestActivity.showConsentUnavailable(this)
+        }
+    }
+
+    // may NOT called when app is in background
+    // ONLY do UI update here, write DB in bg process
+    override fun cbSpeedUpdate(stats: SpeedDisplayData) {
+        binding.stats.updateSpeed(stats.txRateProxy, stats.rxRateProxy)
+    }
+
+    override suspend fun cbTrafficUpdate(data: TrafficDataBatch) {
+        ProfileManager.postUpdate(data.items)
+    }
+
+    override fun cbSelectorUpdate(id: Long) {
+        val old = DataStore.selectedProxy
+        DataStore.selectedProxy = id
+        DataStore.currentProfile = id
+        refreshConfigurationProfileState()
+        runOnDefaultDispatcher {
+            ProfileManager.postUpdate(old, true)
+            ProfileManager.postUpdate(id, true)
+        }
+    }
+
+    override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
+        when (key) {
+            Key.SERVICE_MODE -> onBinderDied()
+            // The JSON editors of custom_inbound and dns_object write here from their own activity.
+            Key.PROXY_APPS, Key.BYPASS_MODE, Key.INDIVIDUAL,
+            SettingsRegistry.CUSTOM_INBOUND.key, SettingsRegistry.DNS_OBJECT.key -> {
+                if (DataStore.serviceState.canStop) {
+                    snackbar(getString(R.string.need_reload)).setAction(R.string.apply) {
+                        SagerNet.reloadService()
+                    }.show()
+                }
+            }
+        }
+    }
+
+    override fun onStart() {
+        connection.updateConnectionId(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND)
+        super.onStart()
+    }
+
+    override fun onStop() {
+        connection.updateConnectionId(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_BACKGROUND)
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        DataStore.configurationStore.unregisterChangeListener(this)
+        connection.disconnect(this)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        // the drawer sits at the start edge: the right one in RTL layouts
+        val rtl = binding.root.layoutDirection == View.LAYOUT_DIRECTION_RTL
+        val towardsDrawer = if (rtl) KeyEvent.KEYCODE_DPAD_RIGHT else KeyEvent.KEYCODE_DPAD_LEFT
+        val awayFromDrawer = if (rtl) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT
+        when (keyCode) {
+            towardsDrawer -> {
+                if (super.onKeyDown(keyCode, event)) return true
+                // Row buttons, grid columns, tabs and toolbar items come first; the drawer opens at the edge.
+                val direction = if (rtl) View.FOCUS_RIGHT else View.FOCUS_LEFT
+                if (!binding.drawerLayout.isOpen && screenFocusTarget(direction) == null) {
+                    binding.drawerLayout.open()
+                    navigation.requestFocus()
+                    return true
+                }
+            }
+
+            awayFromDrawer -> {
+                if (binding.drawerLayout.isOpen) {
+                    binding.drawerLayout.close()
+                    return true
+                }
+            }
+
+            KeyEvent.KEYCODE_DPAD_DOWN -> if (!binding.drawerLayout.isOpen && focusMainControls()) return true
+
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> if (SagerNet.isTv) {
+                toggleService()
+                return true
+            }
+        }
+
+        if (super.onKeyDown(keyCode, event)) return true
+        if (binding.drawerLayout.isOpen) return false
+
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ToolbarFragment
+        return fragment != null && fragment.onKeyDown(keyCode, event)
+    }
+
+    /** Where focus would move inside the current screen, when that view is on screen (other tabs' pages are not). */
+    private fun screenFocusTarget(direction: Int): View? {
+        val focused = currentFocus ?: return null
+        val root = supportFragmentManager.findFragmentById(R.id.fragment_holder)?.view as? ViewGroup ?: return null
+        if (!focused.isInside(root)) return null
+        return FocusFinder.getInstance().findNextFocus(root, focused, direction)
+            ?.takeIf { it.getGlobalVisibleRect(Rect()) }
+    }
+
+    /** D-pad down past the end of the screen's content reaches the FAB, then the stats bar (they float over it). */
+    private fun focusMainControls(): Boolean {
+        val focused = currentFocus ?: return false
+        val root = supportFragmentManager.findFragmentById(R.id.fragment_holder)?.view ?: return false
+        if (!focused.isInside(root)) return false
+        var parent = focused.parent
+        while (parent is View && parent !== root) {
+            if (parent.canScrollVertically(1)) return false
+            parent = parent.parent
+        }
+        // Other tabs' pages beside the pager are focusable too: go to what is visible below, if anything.
+        screenFocusTarget(View.FOCUS_DOWN)?.let { return it.requestFocus() }
+        return when {
+            binding.fab.isShown && binding.fab.isFocusable -> binding.fab.requestFocus()
+            binding.stats.isShown && binding.stats.isFocusable -> binding.stats.requestFocus()
+            else -> false
+        }
+    }
+
+    private fun View.isInside(root: View): Boolean {
+        var view: View? = this
+        while (view != null) {
+            if (view === root) return true
+            view = view.parent as? View
+        }
+        return false
+    }
+
+}
