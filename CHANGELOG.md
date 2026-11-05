@@ -7,6 +7,9 @@
  * 1. 单击：测试当前活动出站链路的连通性（保持原有逻辑）。
  * 2. 长按：批量测试当前主页面订阅/分组中全部节点的 Ping 延迟，并同步刷新出站 IP 与归属地国旗信息。
 
+#### 2.0.5.6
+ * 1. 删除底栏测试是显示的http https。app/src/main/java/io/nekohasekai/sagernet/widget/StatsBar.kt
+ * 2. 更新紧凑模式ip与国家测试，显示国旗和延时。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
 #### 2.0.5.3
 
 *  更新紧凑模式右侧数据显示规则。app/src/main/java/io/nekohasekai/sagernet/ui/profiles/ProfileRowHolder.kt
