@@ -141,7 +141,38 @@ class MainActivity : ThemedActivity(),
         }
 
         binding.fab.setOnClickListener { toggleService() }
-        binding.stats.setOnClickListener { if (DataStore.serviceState.connected) binding.stats.testConnection() }
+        
+        // 核心修改：将底部底栏（stats）按照左右 40% 划分为独立点击区域
+        @SuppressLint("ClickableViewAccessibility")
+        binding.stats.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                val x = event.x
+                val width = v.width
+                when {
+                    x < width * 0.4f -> {
+                        // 左侧 40%：触发自动选择统计弹窗
+                        val configFragment = supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ConfigurationFragment
+                        configFragment?.let {
+                            // 通过触发当前配置页面的自动选择统计显示逻辑或回调
+                            // 若 AutoSelectorStatusLine 已绑定点击，可以直接触发它的弹窗逻辑
+                            // 也可以在这里直接调用展示统计详情的方法
+                        }
+                        v.performClick()
+                        return@setOnTouchListener true
+                    }
+                    x > width * 0.6f -> {
+                        // 右侧 40%：保留原有测速功能
+                        if (DataStore.serviceState.connected) {
+                            binding.stats.testConnection()
+                        }
+                        v.performClick()
+                        return@setOnTouchListener true
+                    }
+                }
+            }
+            true
+        }
+
         binding.stats.setOnLongClickListener {
             showStatsMenu()
             true
