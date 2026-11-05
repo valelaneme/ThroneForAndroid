@@ -6,8 +6,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.kotlin.dsl.getByName
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import java.util.Base64
 import java.util.Properties
 
@@ -64,14 +63,9 @@ fun Project.setupCommon() {
             sourceCompatibility = JavaVersion.VERSION_17
             targetCompatibility = JavaVersion.VERSION_17
         }
-        
-        // 使用现代 Kotlin 编译选项配置（替代已废弃的 kotlinOptions）
-        tasks.withType(KotlinJvmCompile::class.java).configureEach {
-            compilerOptions {
-                jvmTarget.set(JvmTarget.JVM_17)
-            }
+        (android as ExtensionAware).extensions.getByName<KotlinJvmOptions>("kotlinOptions").apply {
+            jvmTarget = JavaVersion.VERSION_17.toString()
         }
-
         lint {
             showAll = true
             checkAllWarnings = true
