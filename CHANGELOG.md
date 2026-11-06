@@ -1,3 +1,6 @@
+#### 2.0.6.1
+* 编译
+
 #### 2.0.6
 
 * Add DNS tunnels: DNSTT/VayDNS, MasterDNS/StormDNS and XDNS **1**
