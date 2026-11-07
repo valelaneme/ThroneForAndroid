@@ -13,77 +13,68 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- 左侧：上一节点 -->
+        <!-- 保留原有 ID 的上一节点按钮（你可以通过代码控制它的显示与隐藏） -->
         <ImageButton
             android:id="@+id/widget_previous"
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:background="@drawable/widget_button_background"
             android:contentDescription="@string/widget_previous"
-            android:src="@drawable/ic_widget_previous" />
+            android:src="@drawable/ic_widget_previous"
+            android:visibility="gone" />
 
-        <!-- 中间容器：不再作为一个整体按钮 -->
+        <!-- 左侧：文字信息区域（点击弹出切换窗口） -->
         <LinearLayout
+            android:id="@+id/widget_switch_menu"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:background="@drawable/widget_button_background"
             android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp">
+            android:orientation="vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
-            <!-- 开关按钮：单独保留点击事件（控制 VPN 开关） -->
-            <ImageView
-                android:id="@+id/widget_toggle"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/widget_button_background"
-                android:contentDescription="@string/widget_toggle"
-                android:padding="4dp"
-                android:src="@drawable/ic_widget_off" />
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/app_name"
+                android:textColor="@color/widget_text_primary"
+                android:textSize="13sp" />
 
-            <!-- 文字区域：新增独立 ID，用于点击弹出切换窗口 -->
-            <LinearLayout
-                android:id="@+id/widget_switch_menu"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/widget_button_background"
-                android:gravity="center_vertical"
-                android:orientation="vertical"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp">
-
-                <TextView
-                    android:id="@+id/widget_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@string/app_name"
-                    android:textColor="@color/widget_text_primary"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/widget_subtitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@string/widget_stopped"
-                    android:textColor="@color/widget_text_secondary"
-                    android:textSize="12sp" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/widget_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_stopped"
+                android:textColor="@color/widget_text_secondary"
+                android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- 右侧：下一节点 -->
+        <!-- 右侧：启动/开关按钮 -->
+        <ImageView
+            android:id="@+id/widget_toggle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="2dp"
+            android:background="@drawable/widget_button_background"
+            android:contentDescription="@string/widget_toggle"
+            android:padding="2dp"
+            android:src="@drawable/ic_widget_off" />
+
+        <!-- 保留原有 ID 的下一节点按钮（你可以通过代码控制它的显示与隐藏） -->
         <ImageButton
             android:id="@+id/widget_next"
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:background="@drawable/widget_button_background"
             android:contentDescription="@string/widget_next"
-            android:src="@drawable/ic_widget_next" />
+            android:src="@drawable/ic_widget_next"
+            android:visibility="gone" />
     </LinearLayout>
 </FrameLayout>
