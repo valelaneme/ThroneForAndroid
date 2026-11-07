@@ -22,6 +22,7 @@ import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.database.preference.OnPreferenceDataStoreChangeListener
 import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import io.nekohasekai.sagernet.ui.SwitchActivity
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -180,6 +181,7 @@ object Widgets {
         views.setViewVisibility(R.id.widget_previous, cycle)
         views.setViewVisibility(R.id.widget_next, cycle)
         views.setOnClickPendingIntent(R.id.widget_toggle, togglePendingIntent(context))
+        views.setOnClickPendingIntent(R.id.widget_switch_menu, switchPendingIntent(context))
         views.setOnClickPendingIntent(R.id.widget_previous, actionPendingIntent(context, ACTION_PREVIOUS, 1))
         views.setOnClickPendingIntent(R.id.widget_next, actionPendingIntent(context, ACTION_NEXT, 2))
         return views
@@ -207,6 +209,13 @@ object Widgets {
         context, 0,
         Intent(context, QuickToggleShortcut::class.java)
             .setAction(Intent.ACTION_MAIN)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    private fun switchPendingIntent(context: Context) = PendingIntent.getActivity(
+        context, 10,
+        Intent(context, SwitchActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
