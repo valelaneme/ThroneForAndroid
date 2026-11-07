@@ -13,6 +13,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- 左侧：上一节点 -->
         <ImageButton
             android:id="@+id/widget_previous"
             android:layout_width="44dp"
@@ -21,31 +22,38 @@
             android:contentDescription="@string/widget_previous"
             android:src="@drawable/ic_widget_previous" />
 
+        <!-- 中间容器：不再作为一个整体按钮 -->
         <LinearLayout
-            android:id="@+id/widget_toggle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/widget_button_background"
-            android:contentDescription="@string/widget_toggle"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="4dp"
             android:paddingEnd="4dp">
 
+            <!-- 开关按钮：单独保留点击事件（控制 VPN 开关） -->
             <ImageView
-                android:id="@+id/widget_icon"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:importantForAccessibility="no"
+                android:id="@+id/widget_toggle"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/widget_button_background"
+                android:contentDescription="@string/widget_toggle"
+                android:padding="4dp"
                 android:src="@drawable/ic_widget_off" />
 
+            <!-- 文字区域：新增独立 ID，用于点击弹出切换窗口 -->
             <LinearLayout
+                android:id="@+id/widget_switch_menu"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:background="@drawable/widget_button_background"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
 
                 <TextView
                     android:id="@+id/widget_title"
@@ -69,6 +77,7 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- 右侧：下一节点 -->
         <ImageButton
             android:id="@+id/widget_next"
             android:layout_width="44dp"
