@@ -16,8 +16,8 @@
         <!-- 保留原有 ID 的上一节点按钮（你可以通过代码控制它的显示与隐藏） -->
         <ImageButton
             android:id="@+id/widget_previous"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:background="@drawable/widget_button_background"
             android:contentDescription="@string/widget_previous"
             android:src="@drawable/ic_widget_previous"
@@ -32,8 +32,11 @@
             android:background="@drawable/widget_button_background"
             android:gravity="center_vertical"
             android:orientation="vertical"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp">
+            
 
             <TextView
                 android:id="@+id/widget_title"
@@ -70,8 +73,8 @@
         <!-- 保留原有 ID 的下一节点按钮（你可以通过代码控制它的显示与隐藏） -->
         <ImageButton
             android:id="@+id/widget_next"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:background="@drawable/widget_button_background"
             android:contentDescription="@string/widget_next"
             android:src="@drawable/ic_widget_next"
