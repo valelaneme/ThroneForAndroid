@@ -181,7 +181,7 @@ object Widgets {
         views.setViewVisibility(R.id.widget_previous, cycle)
         views.setViewVisibility(R.id.widget_next, cycle)
         views.setOnClickPendingIntent(R.id.widget_toggle, togglePendingIntent(context))
-        views.setOnClickPendingIntent(R.id.widget_switch_menu, switchPendingIntent(context))
+        views.setOnClickPendingIntent(R.id.widget_switch_menu, actionPendingIntent(context, ACTION_NEXT, 2))
         views.setOnClickPendingIntent(R.id.widget_previous, actionPendingIntent(context, ACTION_PREVIOUS, 1))
         views.setOnClickPendingIntent(R.id.widget_next, actionPendingIntent(context, ACTION_NEXT, 2))
         return views
