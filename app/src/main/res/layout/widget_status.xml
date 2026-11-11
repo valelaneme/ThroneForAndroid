@@ -13,7 +13,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- 保留原有 ID 的上一节点按钮（0 0 隐藏） -->
+        <!-- 保留原有 ID 的上一节点按钮 -->
         <ImageButton
             android:id="@+id/widget_previous"
             android:layout_width="0dp"
@@ -23,14 +23,7 @@
             android:src="@drawable/ic_widget_previous"
             android:visibility="gone" />
 
-        <!-- 保留原有 ID 的切换菜单按钮（原弹出窗口事件，设为 0 0 隐藏，不删代码） -->
-        <View
-            android:id="@+id/widget_switch_menu"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-
-        <!-- 左侧：文字信息区域（ID 改为 widget_next，点击直接触发顺序切换下一节点） -->
+        <!-- 左侧：文字信息区域（直接使用 widget_next 接收点击事件） -->
         <LinearLayout
             android:id="@+id/widget_next"
             android:layout_width="0dp"
@@ -39,10 +32,10 @@
             android:background="@drawable/widget_button_background"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp"
             android:paddingStart="8dp"
-            android:paddingEnd="8dp">
+            android:paddingTop="0dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="0dp">
 
             <TextView
                 android:id="@+id/widget_title"
@@ -65,7 +58,7 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- 右侧：启动/开关按钮（保持不变） -->
+        <!-- 右侧：启动/开关按钮 -->
         <ImageView
             android:id="@+id/widget_toggle"
             android:layout_width="36dp"
