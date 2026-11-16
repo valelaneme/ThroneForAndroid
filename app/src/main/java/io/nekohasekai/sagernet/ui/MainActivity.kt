@@ -504,6 +504,18 @@ class MainActivity : ThemedActivity(),
         val popup = PopupMenu(this, binding.stats)
         popup.menuInflater.inflate(R.menu.stats_bar_menu, popup.menu)
         popup.menu.findItem(R.id.action_test_speed_current).isEnabled = DataStore.serviceState.connected
+
+        val configFragment = currentMainFragment as? ConfigurationFragment
+            ?: supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ConfigurationFragment
+
+        if (configFragment != null) {
+            if (configFragment.currentGroup()?.subscription != null) {
+                popup.menu.add(0, R.id.action_update_subscription, 10, R.string.profiles_update_subscription)
+            }
+            popup.menu.add(0, R.id.action_test_url, 20, R.string.profiles_test_url)
+            popup.menu.add(0, R.id.action_test_ip, 30, R.string.profiles_test_ip)
+        }
+
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.action_live_graphs -> displayFragmentWithId(R.id.nav_live_graphs)
@@ -511,6 +523,11 @@ class MainActivity : ThemedActivity(),
                     if (!TestSessionClient.startCurrent(TestSpec.KIND_SPEED)) {
                         snackbar(R.string.profiles_test_busy).show()
                     }
+                }
+                R.id.action_update_subscription,
+                R.id.action_test_url,
+                R.id.action_test_ip -> {
+                    configFragment?.onMenuItemClick(item)
                 }
             }
             true
