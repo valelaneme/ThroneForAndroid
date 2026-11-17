@@ -509,7 +509,7 @@ class MainActivity : ThemedActivity(),
             ?: supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ConfigurationFragment
 
         if (configFragment != null) {
-            if (configFragment.currentGroup()?.subscription != null) {
+            if (configFragment.currentGroup()?.isSubscription == true) {
                 popup.menu.add(0, R.id.action_update_subscription, 10, R.string.profiles_update_subscription)
             }
             popup.menu.add(0, R.id.action_test_url, 20, R.string.profiles_test_url)
