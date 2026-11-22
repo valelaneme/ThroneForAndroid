@@ -21,14 +21,16 @@ class WidgetActionReceiver : BroadcastReceiver() {
         }
         val service = DataStore.baseService
         if (service != null && service.data.state.canStop) {
-            service.switchRelative(step)
+            // Skip failed-test profiles, same as the stopped path below.
+            val current = DataStore.selectedProxy.takeIf { it > 0L } ?: service.data.proxy?.profile?.id ?: return
+            ProfileOrder.neighbourAvailable(current, step)?.let { service.switchProfile(it.id) }
             return
         }
         val pending = goAsync()
         val app = context.applicationContext
         runOnDefaultDispatcher {
             try {
-                ProfileOrder.neighbour(DataStore.selectedProxy, step)?.let { DataStore.selectedProxy = it.id }
+                ProfileOrder.neighbourAvailable(DataStore.selectedProxy, step)?.let { DataStore.selectedProxy = it.id }
                 Widgets.render(app)
             } finally {
                 pending.finish()
