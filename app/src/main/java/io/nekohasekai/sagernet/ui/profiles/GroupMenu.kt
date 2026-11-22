@@ -121,22 +121,28 @@ class GroupMenu(private val host: ConfigurationFragment) {
         return true
     }
 
+    /** Refresh the current group: sync it if derived, otherwise update its subscription.
+     *  Shared by the overflow menu item and the toolbar refresh icon. */
+    fun refreshCurrentGroup() {
+        val group = host.currentGroup() ?: return
+        val id = group.id
+        if (DerivedGroupStore.isDerived(id)) {
+            host.launchIo {
+                val result = DerivedGroupSync.sync(id)
+                if (result != null) host.onUi {
+                    val message = getString(R.string.derived_updated, result.kept)
+                    snackbar(message).show()
+                }
+            }
+        } else {
+            GroupActions.updateSubscription(group)
+        }
+    }
+
     private fun onGroupItemClick(item: MenuItem, group: ProxyGroup): Boolean {
         val id = group.id
         when (item.itemId) {
-            R.id.action_update_subscription -> {
-                if (DerivedGroupStore.isDerived(id)) {
-                    host.launchIo {
-                        val result = DerivedGroupSync.sync(id)
-                        if (result != null) host.onUi {
-                            val message = getString(R.string.derived_updated, result.kept)
-                            snackbar(message).show()
-                        }
-                    }
-                } else {
-                    GroupActions.updateSubscription(group)
-                }
-            }
+            R.id.action_update_subscription -> refreshCurrentGroup()
             R.id.action_test_url -> ProfileTests.startGroup(host, TestSpec.KIND_URL, id)
             R.id.action_test_ip -> ProfileTests.startGroup(host, TestSpec.KIND_IP, id)
             R.id.action_test_speed -> ProfileTests.startGroup(host, TestSpec.KIND_SPEED, id)

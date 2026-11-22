@@ -439,6 +439,10 @@ class ConfigurationFragment : ToolbarFragment(R.layout.layout_group_list),
             toolbar?.menu?.let(groupMenu::prepare)
             return false
         }
+        if (item.itemId == R.id.action_update_group) {
+            groupMenu.refreshCurrentGroup()
+            return true
+        }
         return TvControls.onMenuItemClick(requireContext(), item) || selection.onMenuItemClick(item) ||
             imports.onMenuItemClick(item) || groupMenu.onMenuItemClick(item)
     }
