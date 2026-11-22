@@ -20,9 +20,9 @@ import kotlinx.coroutines.launch
 @Database(
     entities = [
         ProxyGroup::class, ProxyEntity::class, RouteProfileEntity::class, RouteRuleEntity::class,
-        SettingEntry::class, MarkerEntity::class, DerivedGroup::class,
+        SettingEntry::class, MarkerEntity::class,
     ],
-    version = 21,
+    version = 20,
     autoMigrations = [
         AutoMigration(from = 8, to = 9),
         AutoMigration(from = 12, to = 13),
@@ -181,23 +181,6 @@ abstract class SagerDatabase : RoomDatabase() {
             }
         }
 
-        /**
-         * 20 -> 21: the local-only derived_groups table. No synced table is altered, so backups keep working exactly
-         * as before; the relationship is rebuilt by the user on the Android device if a restore drops a group.
-         */
-        val MIGRATION_20_21: Migration = object : Migration(20, 21) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    "CREATE TABLE IF NOT EXISTS `derived_groups` (" +
-                        "`gid` INTEGER PRIMARY KEY NOT NULL, " +
-                        "`source_gids_json` TEXT NOT NULL DEFAULT '[]', " +
-                        "`name_filter` TEXT NOT NULL DEFAULT '', " +
-                        "`name_exclude` TEXT NOT NULL DEFAULT '', " +
-                        "`update_mode` INTEGER NOT NULL DEFAULT 0)"
-                )
-            }
-        }
-
         /** Configs.cpp:35-39: a new database starts with an ordinary group named "Default". */
         private val callback = object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
@@ -219,7 +202,6 @@ abstract class SagerDatabase : RoomDatabase() {
             Room.databaseBuilder(SagerNet.application, SagerDatabase::class.java, Key.DB_PROFILE)
                 .addMigrations(
                     MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20,
-                    MIGRATION_20_21,
                 )
                 .addCallback(callback)
                 // both processes use the file: WAL lets readers in either one run while the other writes
@@ -274,7 +256,6 @@ abstract class SagerDatabase : RoomDatabase() {
         val routeDao get() = instance.routeDao()
         val settingsDao get() = instance.settingsDao()
         val markerDao get() = instance.markerDao()
-        val derivedGroupDao get() = instance.derivedGroupDao()
 
     }
 
@@ -283,6 +264,5 @@ abstract class SagerDatabase : RoomDatabase() {
     abstract fun routeDao(): RouteDao
     abstract fun settingsDao(): SettingEntry.Dao
     abstract fun markerDao(): MarkerEntity.Dao
-    abstract fun derivedGroupDao(): DerivedGroup.Dao
 
 }
