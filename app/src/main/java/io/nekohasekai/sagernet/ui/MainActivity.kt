@@ -141,9 +141,9 @@ class MainActivity : ThemedActivity(),
         }
 
         binding.fab.setOnClickListener { toggleService() }
-        binding.stats.setOnClickListener { if (DataStore.serviceState.connected) binding.stats.testConnection() }
+        binding.stats.setOnClickListener { statsTestGroup(TestSpec.KIND_URL) }
         binding.stats.setOnLongClickListener {
-            showStatsMenu()
+            statsTestGroup(TestSpec.KIND_IP)
             true
         }
 
@@ -500,6 +500,20 @@ class MainActivity : ThemedActivity(),
     /** Shows group [id] when the profiles screen is open; otherwise it opens there next, being the current group. */
     fun showGroup(id: Long) {
         (supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ConfigurationFragment)?.showGroup(id)
+    }
+
+    /** Tests every node in the group currently shown on the profiles screen.
+     *  Falls back to the running connection when the profiles screen is not open. */
+    private fun statsTestGroup(kind: Int) {
+        val configFragment = currentMainFragment as? ConfigurationFragment
+            ?: supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ConfigurationFragment
+        val groupId = configFragment?.currentGroup()?.id
+        val started = if (groupId != null) {
+            TestSessionClient.startGroup(kind, groupId)
+        } else {
+            TestSessionClient.startCurrent(kind)
+        }
+        if (!started) snackbar(R.string.profiles_test_busy).show()
     }
 
     /** The stats bar's long-press menu: the live graphs, and a speed test of the running connection. */
