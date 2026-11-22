@@ -218,6 +218,8 @@ internal object SubscriptionRefresh {
         if (routing.isNotEmpty() && !dbFailed) SubscriptionRoute.importRoute(gid, routing)
 
         if (options.urlTest) SubscriptionQueue.requestUrlTest(gid, ProfileManager.memberIds(gid).filter { it !in stickyIds })
+        // A derived group that opted in rebuilds from this group now that its subscription nodes are refreshed.
+        if (DerivedGroupSync.hasAutomaticDependent(gid)) DerivedGroupSync.onSourceUpdated(gid)
     }
 
     /**

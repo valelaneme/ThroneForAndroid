@@ -195,6 +195,16 @@
     <string name="http_proxy_bypass">HTTP 代理绕过列表</string>
     <string name="http_proxy_bypass_dialog_message">一行一个，# 开头代表注释。示例：*zhihu.com</string>
     <string name="group_basic">基本</string>
+    <string name="group_derived">筛选分组</string>
+    <string name="derived_source_groups">来源分组</string>
+    <string name="derived_source_archived">%1$s（已归档）</string>
+    <string name="derived_source_empty">未选择来源</string>
+    <string name="derived_source_required">请至少选择一个来源分组</string>
+    <string name="derived_update_mode">更新模式</string>
+    <string name="derived_mode_manual">仅手动更新</string>
+    <string name="derived_mode_automatic">跟随订阅更新</string>
+    <string name="derived_hint">节点按名称从来源分组复制而来，在此手动修改会在下次更新时被覆盖。</string>
+    <string name="derived_updated">筛选分组已更新：%1$d 个节点</string>
     <string name="subscription">订阅</string>
     <string name="service_subscription">订阅更新服务</string>
     <string name="subscription_import">导入订阅</string>

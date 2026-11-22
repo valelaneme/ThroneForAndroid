@@ -12,7 +12,7 @@
         <moe.matsuri.nb4a.ui.SimpleMenuPreference
             app:defaultValue="0"
             app:entries="@array/group_types"
-            app:entryValues="@array/int_array_2"
+            app:entryValues="@array/int_array_3"
             app:icon="@drawable/ic_baseline_layers_24"
             app:key="groupType"
             app:title="@string/grp_type"
@@ -40,6 +40,27 @@
             app:icon="@drawable/baseline_delete_sweep_24"
             app:key="groupAutoClearUnavailable"
             app:title="@string/grp_auto_clear_unavailable" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:isPreferenceVisible="false"
+        app:key="groupDerived"
+        app:title="@string/group_derived">
+
+        <MultiSelectListPreference
+            app:icon="@drawable/ic_baseline_layers_24"
+            app:key="derivedSourceGroups"
+            app:title="@string/derived_source_groups" />
+
+        <moe.matsuri.nb4a.ui.SimpleMenuPreference
+            app:defaultValue="0"
+            app:entries="@array/derived_update_mode_entries"
+            app:entryValues="@array/derived_update_modes"
+            app:icon="@drawable/ic_baseline_update_24"
+            app:key="derivedUpdateMode"
+            app:title="@string/derived_update_mode"
+            app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
 

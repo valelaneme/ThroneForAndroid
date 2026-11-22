@@ -24,6 +24,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.database.DataStore
+import io.nekohasekai.sagernet.database.DerivedGroup
 import io.nekohasekai.sagernet.database.GroupRepo
 import io.nekohasekai.sagernet.database.ProfileManager
 import io.nekohasekai.sagernet.database.ProxyGroup
@@ -35,6 +36,8 @@ import io.nekohasekai.sagernet.database.SubUserInfo
 import io.nekohasekai.sagernet.database.SubscriptionOptions
 import io.nekohasekai.sagernet.database.preference.EditTextPreferenceModifiers
 import io.nekohasekai.sagernet.database.preference.OnPreferenceDataStoreChangeListener
+import io.nekohasekai.sagernet.group.DerivedGroupStore
+import io.nekohasekai.sagernet.group.DerivedGroupSync
 import io.nekohasekai.sagernet.group.DeviceDetails
 import io.nekohasekai.sagernet.group.RequestIdentity
 import io.nekohasekai.sagernet.group.SubscriptionClient
@@ -76,6 +79,7 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
         /** Values of the "Type" menu (@array/group_types). */
         const val TYPE_BASIC = 0
         const val TYPE_SUBSCRIPTION = 1
+        const val TYPE_DERIVED = 2
 
         private const val STATE_ADVANCED = "advancedExpanded"
         private const val AUTO_SELECTOR = "autoselector"
@@ -112,6 +116,10 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
         private const val KEY_NAME_EXCLUDE = "groupSubNameExclude"
         private const val KEY_TYPE_EXCLUDE = "groupSubTypeExclude"
         private val NAME_FILTERS = listOf(KEY_NAME_FILTER, KEY_NAME_EXCLUDE)
+
+        private const val KEY_DERIVED = "groupDerived"
+        private const val KEY_DERIVED_SOURCES = "derivedSourceGroups"
+        private const val KEY_DERIVED_MODE = "derivedUpdateMode"
 
         private val HWID_KEYS = listOf(KEY_HWID, KEY_HWID_OS, KEY_HWID_OS_VERSION, KEY_HWID_MODEL)
         private val OPTION_TEXT_KEYS = listOf(KEY_USER_AGENT) + HWID_KEYS
@@ -168,6 +176,9 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
     /** Stored type_exclude ids this build does not know: offered under their id, so they are kept until unticked. */
     private var unknownTypes: List<String> = emptyList()
 
+    /** (id, label) of the groups selectable as a derived group's source, in tab order. */
+    private var sourceChoices: List<Pair<Long, String>> = emptyList()
+
     private val fragment get() = supportFragmentManager.findFragmentById(R.id.settings) as? GroupPreferenceFragment
 
     private val selectFront = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -208,6 +219,7 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
                     DataStore.dirty = prefilled
                 }
                 groupCount = GroupRepo.ids().size
+                sourceChoices = DerivedGroupUi.sourceChoices(this@GroupSettingsActivity, editingId)
                 val identity = RequestIdentity.resolve(null)
                 defaultUserAgent = identity.userAgent
                 defaultDevice = identity.device
@@ -300,7 +312,10 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
         val name = ProxyGroup(name = DataStore.groupName.trim()).displayName()
         confirmAction(getString(R.string.confirm_remove_group), name, R.string.delete) {
             lifecycleScope.launch {
-                withContext(Dispatchers.IO) { GroupRepo.delete(editingId) }
+                withContext(Dispatchers.IO) {
+                    GroupRepo.delete(editingId)
+                    DerivedGroupStore.delete(editingId)
+                }
                 SubscriptionScheduler.schedule()
                 finish()
             }
@@ -326,8 +341,21 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
     private fun writeToCache(group: ProxyGroup) {
         val store = DataStore.profileCacheStore
         DataStore.groupName = group.name
-        DataStore.groupType = if (group.isSubscription) TYPE_SUBSCRIPTION else TYPE_BASIC
+        val derived = if (group.id > 0) DerivedGroupStore.get(group.id) else null
+        DataStore.groupType = when {
+            derived != null -> TYPE_DERIVED
+            group.isSubscription -> TYPE_SUBSCRIPTION
+            else -> TYPE_BASIC
+        }
         DataStore.subscriptionLink = group.url
+        // Derived settings live in the local record, not in the group's shared sub_options_json.
+        if (derived != null) {
+            store.putStringSet(KEY_DERIVED_SOURCES, derived.sourceGids.map { it.toString() }.toHashSet())
+            store.putString(KEY_DERIVED_MODE, derived.updateMode.toString())
+        } else {
+            store.putStringSet(KEY_DERIVED_SOURCES, HashSet())
+            store.putString(KEY_DERIVED_MODE, DerivedGroup.MODE_MANUAL.toString())
+        }
         store.putString(KEY_FRONT, group.frontProxyId.coerceAtLeast(-1L).toString())
         store.putString(KEY_LANDING, group.landingProxyId.coerceAtLeast(-1L).toString())
         store.putBoolean(KEY_AUTO_CLEAR, group.autoClearUnavailable)
@@ -360,8 +388,8 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
         store.putBoolean(KEY_URL_TEST, options.urlTest)
         store.putBoolean(KEY_REMOVE_UNAVAILABLE, options.removeUnavailable)
         store.putBoolean(KEY_SORT_BY_LATENCY, options.sortByLatency)
-        store.putString(KEY_NAME_FILTER, options.nameFilter)
-        store.putString(KEY_NAME_EXCLUDE, options.nameExclude)
+        store.putString(KEY_NAME_FILTER, derived?.nameFilter ?: options.nameFilter)
+        store.putString(KEY_NAME_EXCLUDE, derived?.nameExclude ?: options.nameExclude)
         store.putStringSet(KEY_TYPE_EXCLUDE, options.typeExclude.toMutableSet())
     }
 
@@ -428,11 +456,13 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
     private suspend fun save() {
         if (fragment?.form?.validateAll() == false) return
         var refreshNeeded = false
+        var derivedSyncGid = 0L
         val restartNeeded = withContext(Dispatchers.IO) {
             val group = if (editingId > 0) GroupRepo.get(editingId) ?: return@withContext false else ProxyGroup()
             val url = DataStore.subscriptionLink.trim()
             val store = DataStore.profileCacheStore
-            // A basic group keeps no URL, even one typed before switching the type back.
+            val derivedType = DataStore.groupType == TYPE_DERIVED
+            // A basic or derived group keeps no URL, even one typed before switching the type back.
             val newUrl = if (DataStore.groupType == TYPE_SUBSCRIPTION) url else ""
             // dialog_edit_group.cpp accept: what the old URL's server said no longer applies.
             if (group.url != newUrl) {
@@ -445,6 +475,11 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
             group.url = newUrl
             group.skipAutoUpdate = store.getBoolean(KEY_SKIP_AUTO_UPDATE, false)
             val options = optionsFromCache(group.subOptions.countryFilter)
+            // A derived group keeps its keywords in the local record, not in the synced sub_options_json.
+            if (derivedType) {
+                options.nameFilter = ""
+                options.nameExclude = ""
+            }
             // DialogEditGroup::accept: new filters apply to an existing subscription right away.
             refreshNeeded = editingId > 0 && newUrl.isNotEmpty() && !group.archive && !group.subOptions.sameFilters(options)
             group.subOptions = options
@@ -459,8 +494,31 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
                 ProfileManager.getProfile(ProfileManager.runningProfileId())?.groupId == editingId &&
                 RouteManager.resolveRouteId(group.routeId) != running
             if (editingId > 0) GroupRepo.save(group) else GroupRepo.add(group)
+            // Persist / remove the local derived record to match the chosen type.
+            if (derivedType) {
+                val sources = store.getStringSet(KEY_DERIVED_SOURCES).orEmpty()
+                    .mapNotNull { it.trim().toLongOrNull()?.takeIf { id -> id > 0L && id != group.id } }
+                val mode = store.getString(KEY_DERIVED_MODE)?.toIntOrNull()?.takeIf {
+                    it == DerivedGroup.MODE_MANUAL || it == DerivedGroup.MODE_AUTOMATIC
+                } ?: DerivedGroup.MODE_MANUAL
+                DerivedGroupStore.put(
+                    DerivedGroup(
+                        gid = group.id,
+                        sourceGidsJson = DerivedGroup.gidsToJson(sources),
+                        nameFilter = store.getString(KEY_NAME_FILTER).orEmpty().trim(),
+                        nameExclude = store.getString(KEY_NAME_EXCLUDE).orEmpty().trim(),
+                        updateMode = mode,
+                    )
+                )
+                derivedSyncGid = group.id
+            } else {
+                DerivedGroupStore.delete(group.id)
+            }
             SubscriptionScheduler.schedule()
             restart
+        }
+        if (derivedSyncGid > 0L) {
+            withContext(Dispatchers.IO) { DerivedGroupSync.sync(derivedSyncGid) }
         }
         if (refreshNeeded) SubscriptionClient.refreshGroup(editingId, showDiff = true)
         if (restartNeeded) setResult(RESULT_OK, Intent().putExtra(EXTRA_RESTART_NEEDED, true))
@@ -573,6 +631,8 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
             nameFilter(KEY_NAME_FILTER, R.string.grp_filter_include_empty)
             nameFilter(KEY_NAME_EXCLUDE, R.string.grp_filter_exclude_empty)
             typeFilter()
+            derivedSources()
+            findPreference<Preference>(KEY_DERIVED)!!.summary = getString(R.string.derived_hint)
 
             findPreference<Preference>(KEY_ADVANCED_TOGGLE)!!.setOnPreferenceClickListener {
                 host.advancedExpanded = !host.advancedExpanded
@@ -595,6 +655,7 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
                 validation.bind(key) { pattern -> SubscriptionNameFilter.error(pattern)?.let { vtr(R.string.validation_regex, it) }.orEmpty() }
             }
             validation.addIssueSource(::advancedIssues)
+            validation.addIssueSource(::derivedIssues)
             validation.revealer = { key ->
                 val category = findPreference<Preference>(key)?.parent?.key
                 if (!host.advancedExpanded && category != null && category in ADVANCED_CATEGORIES) {
@@ -605,6 +666,16 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
             validation.start()
             if (host.editingId > 0L) validation.markAll()
             form = validation
+        }
+
+        /** A derived group needs at least one source; the issue sits on the source multi-select. */
+        private fun derivedIssues(): List<FormIssue> {
+            if (DataStore.groupType != TYPE_DERIVED) return emptyList()
+            val chosen = DataStore.profileCacheStore.getStringSet(KEY_DERIVED_SOURCES).orEmpty()
+                .any { it.trim().toLongOrNull()?.let { id -> id > 0L } == true }
+            return if (chosen) emptyList() else listOf(
+                FormIssue(Severity.Error, getString(R.string.derived_source_groups), getString(R.string.derived_source_required), KEY_DERIVED_SOURCES)
+            )
         }
 
         /** The fetcher reads content:// URLs (a picked file) too, and those carry no host. */
@@ -708,6 +779,19 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
             }
         }
 
+        /** The source-group multi-select: only real subscription groups, shown in tab order. */
+        private fun derivedSources() {
+            val preference = findPreference<MultiSelectListPreference>(KEY_DERIVED_SOURCES) ?: return
+            val labels = host.sourceChoices
+            preference.entries = labels.map { it.second }.toTypedArray()
+            preference.entryValues = labels.map { it.first.toString() }.toTypedArray()
+            preference.summaryProvider = Preference.SummaryProvider<MultiSelectListPreference> { p ->
+                val chosen = p.values
+                labels.filter { it.first.toString() in chosen }.joinToString(", ") { it.second }
+                    .ifEmpty { getString(R.string.derived_source_empty) }
+            }
+        }
+
         private fun proxyText(id: Long): String = when {
             id <= 0 -> getString(R.string.grp_none)
             else -> host.proxyLabels[id] ?: getString(R.string.grp_missing_profile, id)
@@ -746,9 +830,13 @@ class GroupSettingsActivity : ThemedActivity(R.layout.layout_config_settings), O
         fun refreshState() {
             if (preferenceScreen == null) return
             val store = DataStore.profileCacheStore
-            val subscription = DataStore.groupType == TYPE_SUBSCRIPTION
+            val type = DataStore.groupType
+            val subscription = type == TYPE_SUBSCRIPTION
+            val derived = type == TYPE_DERIVED
+            findPreference<PreferenceCategory>(KEY_DERIVED)?.isVisible = derived
             findPreference<PreferenceCategory>(KEY_SUBSCRIPTION)?.isVisible = subscription
-            findPreference<PreferenceCategory>(KEY_FILTER)?.isVisible = subscription
+            // The name filters are reused by derived groups as their extraction keywords.
+            findPreference<PreferenceCategory>(KEY_FILTER)?.isVisible = subscription || derived
             val expanded = subscription && host.advancedExpanded
             for (key in ADVANCED_CATEGORIES) findPreference<PreferenceCategory>(key)?.isVisible = expanded
 

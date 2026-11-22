@@ -144,6 +144,17 @@
     <string-array name="group_types">
         <item>@string/group_basic</item>
         <item>@string/subscription</item>
+        <item>@string/group_derived</item>
+    </string-array>
+
+    <string-array name="derived_update_mode_entries">
+        <item>@string/derived_mode_manual</item>
+        <item>@string/derived_mode_automatic</item>
+    </string-array>
+
+    <string-array name="derived_update_modes" translatable="false">
+        <item>0</item>
+        <item>1</item>
     </string-array>
 
     <string-array name="hysteria_version">

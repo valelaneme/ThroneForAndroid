@@ -29,6 +29,8 @@ import io.nekohasekai.sagernet.database.ProxyEntity
 import io.nekohasekai.sagernet.database.ProxyGroup
 import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.databinding.LayoutGroupItemBinding
+import io.nekohasekai.sagernet.group.DerivedGroupStore
+import io.nekohasekai.sagernet.group.DerivedGroupSync
 import io.nekohasekai.sagernet.group.SubscriptionClient
 import io.nekohasekai.sagernet.group.SubscriptionScheduler
 import io.nekohasekai.sagernet.ktx.FixedLinearLayoutManager
@@ -330,22 +332,27 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group), Toolbar.OnMenuItem
         fun bind(row: Row) {
             this.row = row
             val group = row.group
+            val derived = DerivedGroupStore.isDerived(group.id)
             binding.groupName.text = group.displayName()
-            binding.groupType.text = typeText(group)
+            binding.groupType.text = typeText(group, derived)
             binding.groupUrl.isVisible = group.isSubscription && !compactCards
             binding.groupUrl.text = group.url
             val info = if (group.isSubscription && !compactCards) infoText(group) else ""
             binding.groupInfo.isVisible = info.isNotEmpty()
             binding.groupInfo.text = info
-            binding.groupUpdate.isVisible = group.isSubscription && !compactCards
-            binding.groupRefresh.isVisible = group.isSubscription && compactCards
+            val canUpdate = group.isSubscription || derived
+            binding.groupUpdate.isVisible = canUpdate && !compactCards
+            binding.groupRefresh.isVisible = canUpdate && compactCards
             bindQuota(group)
             bindState()
 
             binding.root.setOnClickListener { edit(group) }
             binding.edit.setOnClickListener { edit(group) }
             val update = View.OnClickListener {
-                runOnDefaultDispatcher { SubscriptionClient.refreshGroup(group.id, true) }
+                runOnDefaultDispatcher {
+                    if (DerivedGroupStore.isDerived(group.id)) DerivedGroupSync.sync(group.id)
+                    else SubscriptionClient.refreshGroup(group.id, true)
+                }
             }
             binding.groupUpdate.setOnClickListener(update)
             binding.groupRefresh.setOnClickListener(update)
@@ -446,8 +453,14 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group), Toolbar.OnMenuItem
         }
 
         /** GroupItem::refresh_data: "Basic" / "Subscription", prefixed "Archive" for archived groups. */
-        private fun typeText(group: ProxyGroup): String {
-            val type = getString(if (group.isSubscription) R.string.subscription else R.string.group_basic)
+        private fun typeText(group: ProxyGroup, derived: Boolean = false): String {
+            val type = getString(
+                when {
+                    derived -> R.string.group_derived
+                    group.isSubscription -> R.string.subscription
+                    else -> R.string.group_basic
+                }
+            )
             return if (group.archive) getString(R.string.group_archived) + " " + type else type
         }
 

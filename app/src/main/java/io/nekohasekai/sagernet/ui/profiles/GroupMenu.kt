@@ -12,6 +12,9 @@ import io.nekohasekai.sagernet.database.TestBy
 import io.nekohasekai.sagernet.database.TestShowItems
 import io.nekohasekai.sagernet.database.TrafficBy
 import io.nekohasekai.sagernet.database.TypeBy
+import io.nekohasekai.sagernet.group.DerivedGroupStore
+import io.nekohasekai.sagernet.group.DerivedGroupSync
+import io.nekohasekai.sagernet.ktx.snackbar
 import io.nekohasekai.sagernet.ui.ConfigurationFragment
 import io.nekohasekai.sagernet.ui.test.TestSessionClient
 
@@ -81,7 +84,8 @@ class GroupMenu(private val host: ConfigurationFragment) {
     /** Before the ⋮ menu opens: what applies to the current group and the running test / service. */
     fun prepare(menu: Menu) {
         val group = host.currentGroup()
-        menu.findItem(R.id.action_update_subscription)?.isVisible = group?.isSubscription == true
+        menu.findItem(R.id.action_update_subscription)?.isVisible =
+            group?.isSubscription == true || (group != null && DerivedGroupStore.isDerived(group.id))
         menu.findItem(R.id.action_test_stop)?.isVisible = host.testState.running
         if (group != null && group.keepsSorted()) sortDescending = group.sort.descending
         menu.findItem(if (sortDescending) R.id.action_sort_descending else R.id.action_sort_ascending)?.isChecked = true
@@ -120,7 +124,18 @@ class GroupMenu(private val host: ConfigurationFragment) {
     private fun onGroupItemClick(item: MenuItem, group: ProxyGroup): Boolean {
         val id = group.id
         when (item.itemId) {
-            R.id.action_update_subscription -> GroupActions.updateSubscription(group)
+            R.id.action_update_subscription -> {
+                if (DerivedGroupStore.isDerived(id)) {
+                    host.launchIo {
+                        val result = DerivedGroupSync.sync(id)
+                        if (result != null) host.onUi {
+                            snackbar(host.getString(R.string.derived_updated, result.kept)).show()
+                        }
+                    }
+                } else {
+                    GroupActions.updateSubscription(group)
+                }
+            }
             R.id.action_test_url -> ProfileTests.startGroup(host, TestSpec.KIND_URL, id)
             R.id.action_test_ip -> ProfileTests.startGroup(host, TestSpec.KIND_IP, id)
             R.id.action_test_speed -> ProfileTests.startGroup(host, TestSpec.KIND_SPEED, id)

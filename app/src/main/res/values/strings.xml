@@ -245,6 +245,16 @@
     <string name="http_proxy_bypass">HTTP proxy bypass list</string>
     <string name="http_proxy_bypass_dialog_message">One per line. Lines starting with # are comments. Example: *zhihu.com</string>
     <string name="group_basic">Basic</string>
+    <string name="group_derived">Derived group</string>
+    <string name="derived_source_groups">Source groups</string>
+    <string name="derived_source_archived">%1$s (archived)</string>
+    <string name="derived_source_empty">No source selected</string>
+    <string name="derived_source_required">Select at least one source group</string>
+    <string name="derived_update_mode">Update mode</string>
+    <string name="derived_mode_manual">Manual only</string>
+    <string name="derived_mode_automatic">Follow subscription updates</string>
+    <string name="derived_hint">Members are copied from the source groups by name. Editing them here is overwritten on the next update.</string>
+    <string name="derived_updated">Derived group updated: %1$d nodes</string>
     <string name="subscription">Subscription</string>
     <string name="service_subscription">Subscription update service</string>
     <string name="subscription_import">Import subscription</string>
