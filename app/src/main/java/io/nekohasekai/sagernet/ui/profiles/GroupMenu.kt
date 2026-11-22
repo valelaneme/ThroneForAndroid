@@ -129,7 +129,8 @@ class GroupMenu(private val host: ConfigurationFragment) {
                     host.launchIo {
                         val result = DerivedGroupSync.sync(id)
                         if (result != null) host.onUi {
-                            snackbar(host.getString(R.string.derived_updated, result.kept)).show()
+                            val message = getString(R.string.derived_updated, result.kept)
+                            snackbar(message).show()
                         }
                     }
                 } else {
