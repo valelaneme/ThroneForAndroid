@@ -1559,6 +1559,16 @@
     <string name="http_proxy_bypass_dialog_message">一行一個，# 開頭代表註解。範例：*zhihu.com</string>
     <string name="group_basic">基本</string>
     <string name="subscription">訂閱</string>
+    <string name="group_derived">篩選分組</string>
+    <string name="derived_source_groups">來源分組</string>
+    <string name="derived_source_archived">%1$s（已封存）</string>
+    <string name="derived_source_empty">未選擇來源</string>
+    <string name="derived_source_required">請至少選擇一個來源分組</string>
+    <string name="derived_update_mode">更新模式</string>
+    <string name="derived_mode_manual">僅手動更新</string>
+    <string name="derived_mode_automatic">跟隨訂閱更新</string>
+    <string name="derived_hint">節點按名稱從來源分組複製而來，在此手動修改會在下次更新時被覆蓋。</string>
+    <string name="derived_updated">篩選分組已更新：%1$d 個節點</string>
     <string name="service_subscription">訂閱更新服務</string>
     <string name="subscription_import">匯入訂閱</string>
     <string name="profile_import">匯入設定檔</string>
