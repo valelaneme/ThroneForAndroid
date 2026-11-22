@@ -28,6 +28,7 @@
     <string name="speed">%s/s</string>
     <string name="connection_test_testing">测试中…</string>
     <string name="connection_test_available">HTTPS：%d 毫秒</string>
+    <string name="connection_test_ms">%d 毫秒</string>
     <string name="connection_test_error">失败: %s</string>
     <!-- proxy category -->
     <string name="profile_name">配置名称</string>

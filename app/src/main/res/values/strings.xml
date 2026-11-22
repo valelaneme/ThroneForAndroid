@@ -58,6 +58,7 @@
     <string name="connection_test_testing">Testing…</string>
     <string name="connection_test_available">HTTPS: %d ms</string>
     <string name="connection_test_available_http">HTTP: %d ms</string>
+    <string name="connection_test_ms">%d ms</string>
     <string name="connection_test_error">Failed: %s</string>
     <string name="remote_dns">Remote DNS</string>
     <string name="direct_dns">Direct DNS</string>

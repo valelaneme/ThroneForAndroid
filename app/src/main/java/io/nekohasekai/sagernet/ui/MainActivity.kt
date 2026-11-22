@@ -193,6 +193,9 @@ class MainActivity : ThemedActivity(),
         if (DataStore.hideFromRecentApps) {
             applyHideFromRecentApps(DataStore.hideFromRecentApps)
         }
+        // Refresh the delay shown in the bar whenever the page is opened while the service is connected.
+        // Check the binder too: a restored page can see "connected" before the service is bound again.
+        if (DataStore.serviceState.connected && connection.service != null) binding.stats.testConnection()
     }
 
     override fun onPostResume() {

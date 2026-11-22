@@ -28,7 +28,6 @@ import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearancePathProvider
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.bg.BaseService
-import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProxyEntity
 import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.ui.MainActivity
@@ -68,6 +67,8 @@ class StatsBar @JvmOverloads constructor(
     private var currentState = BaseService.State.Idle
     private var pendingTransition: Transition? = Transition.HideImmediate
     private var transitionJob: Job? = null
+    /** Guards the automatic triggers (connect + page open) so one request is never started twice. */
+    private var testing = false
 
     private var scrollHidden = false
     private var scrollDirection = 0 // 1 = hide (dy>0), -1 = show (dy<0), 0 = none
@@ -380,6 +381,7 @@ class StatsBar @JvmOverloads constructor(
         showExit()
         if (state == BaseService.State.Connected) {
             setStatus(app.getText(R.string.vpn_connected))
+            testConnection()
         } else {
             updateSpeed(0, 0)
             setStatus(
@@ -409,7 +411,10 @@ class StatsBar @JvmOverloads constructor(
     }
 
     fun testConnection() {
+        // Both the connect callback and the page-open callback call this; drop the second while one is running.
+        if (testing) return
         val activity = context as MainActivity
+        testing = true
         isEnabled = false
         setStatus(app.getText(R.string.connection_test_testing))
         runOnDefaultDispatcher {
@@ -417,17 +422,12 @@ class StatsBar @JvmOverloads constructor(
                 val elapsed = activity.urlTest()
                 onMainDispatcher {
                     isEnabled = true
+                    testing = false
                     setStatus(
                         if (elapsed == ProxyEntity.LATENCY_CONNECT_ONLY) {
                             app.getText(R.string.test_connect_ok)
                         } else {
-                            app.getString(
-                                if (DataStore.testUrl.startsWith("https://")) {
-                                    R.string.connection_test_available
-                                } else {
-                                    R.string.connection_test_available_http
-                                }, elapsed
-                            )
+                            app.getString(R.string.connection_test_ms, elapsed)
                         }
                     )
                 }
@@ -436,6 +436,7 @@ class StatsBar @JvmOverloads constructor(
                 Logs.w(e.toString())
                 onMainDispatcher {
                     isEnabled = true
+                    testing = false
                     setStatus(app.getText(R.string.connection_test_testing))
 
                     activity.snackbar(

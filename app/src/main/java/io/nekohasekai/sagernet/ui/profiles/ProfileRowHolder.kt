@@ -110,6 +110,12 @@ internal class RowContent(
                     }
                 }
             }
+            // Compact rows have no room for a separate traffic line. Use the result slot for lifetime traffic only
+            // when there is no test result to show; a zero counter leaves the slot empty instead of claiming space.
+            if (brief && result.isEmpty() && profile.rx + profile.tx != 0L) {
+                result.append(context.getString(R.string.traffic, up, down))
+                description = context.getString(R.string.profile_row_traffic, up, down)
+            }
             val error = if (phase == null) profile.testError?.takeIf { it.isNotBlank() } else null
             return RowContent(
                 result = result,

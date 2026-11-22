@@ -1,52 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Speeds left of the FAB, exit and status right of it. Two mirrored lines keep the bar low; the 72dp gap stays
+     clear for the centred FAB. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="10dp">
 
-    <!-- The speeds left of the FAB, the exit right of it; equal halves keep the gap under the centred FAB. -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <LinearLayout
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tx"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:textColor="?whiteOrTextPrimary"
+            android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/tx"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="marquee"
-                android:singleLine="true"
-                android:textColor="?whiteOrTextPrimary"
-                android:textSize="14sp" />
+        <TextView
+            android:id="@+id/rx"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:textColor="?whiteOrTextPrimary"
+            android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/rx"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="marquee"
-                android:singleLine="true"
-                android:textColor="?whiteOrTextPrimary"
-                android:textSize="14sp" />
+    </LinearLayout>
 
-        </LinearLayout>
+    <Space
+        android:layout_width="72dp"
+        android:layout_height="0dp" />
 
-        <Space
-            android:layout_width="72dp"
-            android:layout_height="0dp" />
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="end"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/exit_country"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:ellipsize="end"
             android:gravity="end"
             android:singleLine="true"
@@ -56,16 +61,17 @@
             tools:text="Germany"
             tools:visibility="visible" />
 
-    </LinearLayout>
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="end"
+            android:singleLine="true"
+            android:textColor="?whiteOrTextPrimary"
+            android:textSize="14sp"
+            tools:text="@string/connection_test_available" />
 
-    <TextView
-        android:id="@+id/status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="?whiteOrTextPrimary"
-        android:textSize="16sp"
-        tools:text="@string/connection_test_available" />
+    </LinearLayout>
 
 </LinearLayout>
